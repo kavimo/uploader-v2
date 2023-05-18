@@ -1,0 +1,29 @@
+{
+  "name": "kavimo-uploader-v2",
+  "version": "2.0.0",
+  "description": "javascript library for upload media to Kavimo.com",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "serve": "webpack serve --https --no-client-overlay-warnings"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kavimo/uploader-v2.git"
+  },
+  "keywords": [
+    "Kavimo",
+    "uploaders"
+  ],
+  "author": "Kavimo Team <info@kavimo.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kavimo/uploader-v2/issues"
+  },
+  "homepage": "https://github.com/kavimo/uploader-v2#readme",
+  "devDependencies": {
+    "webpack": "^5.83.1",
+    "webpack-cli": "^5.1.1",
+    "webpack-dev-server": "^4.15.0"
+  }
+}
