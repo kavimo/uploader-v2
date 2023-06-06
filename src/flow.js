@@ -1,40 +1,38 @@
+import MD5 from "./md5"
+
+// ie10+
+var ie10plus = window.navigator.msPointerEnabled;
 /**
- * @license MIT
+ * Flow.js is a library providing multiple simultaneous, stable and
+ * resumable uploads via the HTML5 File API.
+ * @param [opts]
+ * @param {number} [opts.chunkSize]
+ * @param {bool} [opts.forceChunkSize]
+ * @param {number} [opts.simultaneousUploads]
+ * @param {bool} [opts.singleFile]
+ * @param {string} [opts.fileParameterName]
+ * @param {number} [opts.progressCallbacksInterval]
+ * @param {number} [opts.speedSmoothingFactor]
+ * @param {Object|Function} [opts.query]
+ * @param {Object|Function} [opts.headers]
+ * @param {bool} [opts.withCredentials]
+ * @param {Function} [opts.preprocess]
+ * @param {string} [opts.method]
+ * @param {string|Function} [opts.testMethod]
+ * @param {string|Function} [opts.uploadMethod]
+ * @param {bool} [opts.prioritizeFirstAndLastChunk]
+ * @param {bool} [opts.allowDuplicateUploads]
+ * @param {string|Function} [opts.target]
+ * @param {number} [opts.maxChunkRetries]
+ * @param {number} [opts.chunkRetryInterval]
+ * @param {Array.<number>} [opts.permanentErrors]
+ * @param {Array.<number>} [opts.successStatuses]
+ * @param {Function} [opts.initFileFn]
+ * @param {Function} [opts.readFileFn]
+ * @param {Function} [opts.generateUniqueIdentifier]
+ * @constructor
  */
-(function(window, document, undefined) {'use strict';
-  // ie10+
-  var ie10plus = window.navigator.msPointerEnabled;
-  /**
-   * Flow.js is a library providing multiple simultaneous, stable and
-   * resumable uploads via the HTML5 File API.
-   * @param [opts]
-   * @param {number} [opts.chunkSize]
-   * @param {bool} [opts.forceChunkSize]
-   * @param {number} [opts.simultaneousUploads]
-   * @param {bool} [opts.singleFile]
-   * @param {string} [opts.fileParameterName]
-   * @param {number} [opts.progressCallbacksInterval]
-   * @param {number} [opts.speedSmoothingFactor]
-   * @param {Object|Function} [opts.query]
-   * @param {Object|Function} [opts.headers]
-   * @param {bool} [opts.withCredentials]
-   * @param {Function} [opts.preprocess]
-   * @param {string} [opts.method]
-   * @param {string|Function} [opts.testMethod]
-   * @param {string|Function} [opts.uploadMethod]
-   * @param {bool} [opts.prioritizeFirstAndLastChunk]
-   * @param {bool} [opts.allowDuplicateUploads]
-   * @param {string|Function} [opts.target]
-   * @param {number} [opts.maxChunkRetries]
-   * @param {number} [opts.chunkRetryInterval]
-   * @param {Array.<number>} [opts.permanentErrors]
-   * @param {Array.<number>} [opts.successStatuses]
-   * @param {Function} [opts.initFileFn]
-   * @param {Function} [opts.readFileFn]
-   * @param {Function} [opts.generateUniqueIdentifier]
-   * @constructor
-   */
-  function Flow(opts) {
+function Flow(opts) {
     /**
      * Supported by browser?
      * @type {boolean}
@@ -44,13 +42,13 @@
         typeof Blob !== 'undefined' &&
         typeof FileList !== 'undefined' &&
         (
-          !!Blob.prototype.slice || !!Blob.prototype.webkitSlice || !!Blob.prototype.mozSlice ||
-          false
+            !!Blob.prototype.slice || !!Blob.prototype.webkitSlice || !!Blob.prototype.mozSlice ||
+            false
         ) // slicing files support
     );
 
     if (!this.support) {
-      return ;
+        return;
     }
 
     /**
@@ -69,8 +67,8 @@
      */
     this.files = [];
     this.folders = {
-      tree: [],
-      flat: [],
+        tree: [],
+        flat: [],
     };
 
     /**
@@ -78,32 +76,33 @@
      * @type {Object}
      */
     this.defaults = {
-      chunkSize: 1024 * 1024,
-      forceChunkSize: false,
-      simultaneousUploads: 3,
-      singleFile: false,
-      fileParameterName: 'file',
-      progressCallbacksInterval: 500,
-      speedSmoothingFactor: 0.1,
-      query: {},
-      headers: {},
-      withCredentials: false,
-      preprocess: null,
-      method: 'multipart',
-      testMethod: 'GET',
-      uploadMethod: 'POST',
-      prioritizeFirstAndLastChunk: false,
-      allowDuplicateUploads: false,
-      target: '/',
-      testChunks: true,
-      generateUniqueIdentifier: null,
-      maxChunkRetries: 0,
-      chunkRetryInterval: null,
-      permanentErrors: [404, 413, 415, 500, 501],
-      successStatuses: [200, 201, 202],
-      onDropStopPropagation: false,
-      initFileFn: null,
-      readFileFn: webAPIFileRead
+        chunkSize: 1024 * 1024,
+        forceChunkSize: false,
+        simultaneousUploads: 3,
+        singleFile: false,
+        fileParameterName: 'file',
+        fileTypes: [],
+        progressCallbacksInterval: 500,
+        speedSmoothingFactor: 0.1,
+        query: {},
+        headers: {},
+        withCredentials: false,
+        preprocess: null,
+        method: 'multipart',
+        testMethod: 'GET',
+        uploadMethod: 'POST',
+        prioritizeFirstAndLastChunk: false,
+        allowDuplicateUploads: false,
+        target: '/',
+        testChunks: true,
+        generateUniqueIdentifier: null,
+        maxChunkRetries: 0,
+        chunkRetryInterval: null,
+        permanentErrors: [404, 413, 415, 500, 501],
+        successStatuses: [200, 201, 202],
+        onDropStopPropagation: false,
+        initFileFn: null,
+        readFileFn: webAPIFileRead
     };
 
     /**
@@ -127,18 +126,18 @@
      * @function
      * @param {MouseEvent} event
      */
-    this.onDrop = function (event) {
-      if ($.opts.onDropStopPropagation) {
-        event.stopPropagation();
-      }
-      event.preventDefault();
-      var dataTransfer = event.dataTransfer;
-      if (dataTransfer.items && dataTransfer.items[0] &&
-        dataTransfer.items[0].webkitGetAsEntry) {
-        $.webkitReadDataTransfer(event);
-      } else {
-        $.addFiles(dataTransfer.files, event);
-      }
+    this.onDrop = function(event) {
+        if ($.opts.onDropStopPropagation) {
+            event.stopPropagation();
+        }
+        event.preventDefault();
+        var dataTransfer = event.dataTransfer;
+        if (dataTransfer.items && dataTransfer.items[0] &&
+            dataTransfer.items[0].webkitGetAsEntry) {
+            $.webkitReadDataTransfer(event);
+        } else {
+            $.addFiles(dataTransfer.files, event);
+        }
     };
 
     /**
@@ -146,8 +145,8 @@
      * @function
      * @param {MouseEvent} event
      */
-    this.preventEvent = function (event) {
-      event.preventDefault();
+    this.preventEvent = function(event) {
+        event.preventDefault();
     };
 
 
@@ -157,9 +156,9 @@
      */
     this.opts = Flow.extend({}, this.defaults, opts || {});
 
-  }
+}
 
-  Flow.prototype = {
+Flow.prototype = {
     /**
      * Set a callback for an event, possible events:
      * fileSuccess(file), fileProgress(file), fileAdded(file, event),
@@ -169,12 +168,12 @@
      * @param {string} event
      * @param {Function} callback
      */
-    on: function (event, callback) {
-      event = event.toLowerCase();
-      if (!this.events.hasOwnProperty(event)) {
-        this.events[event] = [];
-      }
-      this.events[event].push(callback);
+    on: function(event, callback) {
+        event = event.toLowerCase();
+        if (!this.events.hasOwnProperty(event)) {
+            this.events[event] = [];
+        }
+        this.events[event].push(callback);
     },
 
     /**
@@ -183,19 +182,19 @@
      * @param {string} [event] removes all events if not specified
      * @param {Function} [fn] removes all callbacks of event if not specified
      */
-    off: function (event, fn) {
-      if (event !== undefined) {
-        event = event.toLowerCase();
-        if (fn !== undefined) {
-          if (this.events.hasOwnProperty(event)) {
-            arrayRemove(this.events[event], fn);
-          }
+    off: function(event, fn) {
+        if (event !== undefined) {
+            event = event.toLowerCase();
+            if (fn !== undefined) {
+                if (this.events.hasOwnProperty(event)) {
+                    arrayRemove(this.events[event], fn);
+                }
+            } else {
+                delete this.events[event];
+            }
         } else {
-          delete this.events[event];
+            this.events = {};
         }
-      } else {
-        this.events = {};
-      }
     },
 
     /**
@@ -206,90 +205,115 @@
      * @return {bool} value is false if at least one of the event handlers which handled this event
      * returned false. Otherwise it returns true.
      */
-    fire: function (event, args) {
-      // `arguments` is an object, not array, in FF, so:
-      args = Array.prototype.slice.call(arguments);
-      event = event.toLowerCase();
-      var preventDefault = false;
-      if (this.events.hasOwnProperty(event)) {
-        each(this.events[event], function (callback) {
-          preventDefault = callback.apply(this, args.slice(1)) === false || preventDefault;
-        }, this);
-      }
-      if (event != 'catchall') {
-        args.unshift('catchAll');
-        preventDefault = this.fire.apply(this, args) === false || preventDefault;
-      }
-      return !preventDefault;
+    fire: function(event, args) {
+        // `arguments` is an object, not array, in FF, so:
+        args = Array.prototype.slice.call(arguments);
+        event = event.toLowerCase();
+        var preventDefault = false;
+        if (this.events.hasOwnProperty(event)) {
+            each(this.events[event], function(callback) {
+                preventDefault = callback.apply(this, args.slice(1)) === false || preventDefault;
+            }, this);
+        }
+        if (event != 'catchall') {
+            args.unshift('catchAll');
+            preventDefault = this.fire.apply(this, args) === false || preventDefault;
+        }
+        return !preventDefault;
     },
 
     /**
      * Read webkit dataTransfer object
      * @param event
      */
-    webkitReadDataTransfer: function (event) {
-      var $ = this;
-      var queue = event.dataTransfer.items.length;
-      var files = [];
-      each(event.dataTransfer.items, function (item) {
-        var entry = item.webkitGetAsEntry();
-        if (!entry) {
-          decrement();
-          return ;
-        }
-        if (entry.isFile) {
-          // due to a bug in Chrome's File System API impl - #149735
-          fileReadSuccess(item.getAsFile(), entry.fullPath);
-        } else {
-          var folder = {id: getID(), name: entry.name};
-          folder.items = readDirectory(entry.createReader());
-          $.folders.flat.push(folder);
-          $.folders.tree.push(folder);
-        }
-      });
-      function readDirectory(reader) {
-        var branch = [];
-        reader.readEntries(function (entries) {
-          if (entries.length) {
-            queue += entries.length;
-            each(entries, function(entry) {
-              if (entry.isFile) {
-                var fullPath = entry.fullPath;
-                entry.file(function (file) {
+    webkitReadDataTransfer: function(event) {
+        var $ = this;
+        var queue = event.dataTransfer.items.length;
+        var files = [];
+        var folders = { tree: [], flat: []};
+
+        each(event.dataTransfer.items, function(item) {
+            var entry = item.webkitGetAsEntry();
+            if (!entry) {
+                decrement();
+                return;
+            }
+            if (entry.isFile) {
+                fileReadSuccess(item.getAsFile(), entry.fullPath);
+            } else {
+                var folder = newFolder(entry);
+                folder.items = readDirectory(entry);
+                folders.flat.push(folder);
+                folders.tree.push(folder);
+            }
+        });
+
+        function readDirectory(item) {
+            var branch = [];
+
+            if( item.isFile ) {
+                var fullPath = item.fullPath;
+                item.file(function (file) {
                   fileReadSuccess(file, fullPath);
                 }, readError);
-              } else if (entry.isDirectory) {
-                var folder = {id: getID() ,name: entry.name};
-                $.folders.flat.push(folder);
-                folder.items = readDirectory(entry.createReader());
-                branch.push(folder);
-              }
-            });
-            readDirectory(reader);
-          } else {
-            decrement();
-          }
-        }, readError);
+            } else if(item.isDirectory) {
+                var directoryReader = item.createReader();
+                var fnReadEntries = (function () {
+                    return function (entries) {
+                        queue += entries.length;
+                        entries.forEach(function (entry) {
+                            if( entry.isFile ) {
+                                var fullPath = entry.fullPath;
+                                entry.file(function (file) {
+                                  fileReadSuccess(file, fullPath);
+                                }, readError);
 
-        return branch;
-      }
-      function fileReadSuccess(file, fullPath) {
-        // relative path should not start with "/"
-        file.relativePath = fullPath.substring(1);
-        files.push(file);
-        decrement();
-      }
-      function readError(fileError) {
-        throw fileError;
-      }
-      function decrement() {
-        if (--queue == 0) {
-          $.addFiles(files, event);
+                            } else if(entry.isDirectory) {
+                                let folder = newFolder(entry);
+                                folder.items = readDirectory(entry);
+                                branch.push(folder);
+                                folders.flat.push(folder);
+                            }
+                        });
+                        if (entries.length > 0) {
+                            directoryReader.readEntries(fnReadEntries);
+                        } else {
+                            decrement();
+                        }
+                    };
+                })();
+                directoryReader.readEntries(fnReadEntries);
+            }
+            return branch;
         }
-      }
-      function getID() {
-        return Math.floor((Math.random() * 999999) + 10000);
-      }
+
+        function newFolder(entry) {
+            let p = entry.fullPath.substring(1);
+            return {
+                id: MD5(p),
+                path: p,
+                name: entry.name,
+                items: [],
+            } 
+        }
+
+        function fileReadSuccess(file, fullPath) {
+            file.relativePath = fullPath.substring(1);
+            files.push(file);
+            decrement();
+        }
+
+        function readError(fileError) {
+            decrement();
+            throw fileError;
+        }
+
+        function decrement() {
+            if (--queue == 0) {
+                $.addFiles(files, event, false);
+                $.folders = folders;
+            }
+        }
     },
 
     /**
@@ -298,14 +322,14 @@
      * @param {FlowFile} file
      * @returns {string}
      */
-    generateUniqueIdentifier: function (file) {
-      var custom = this.opts.generateUniqueIdentifier;
-      if (typeof custom === 'function') {
-        return custom(file);
-      }
-      // Some confusion in different versions of Firefox
-      var relativePath = file.relativePath || file.webkitRelativePath || file.fileName || file.name;
-      return file.size + '-' + relativePath.replace(/[^0-9a-zA-Z_-]/img, '');
+    generateUniqueIdentifier: function(file) {
+        var custom = this.opts.generateUniqueIdentifier;
+        if (typeof custom === 'function') {
+            return custom(file);
+        }
+        // Some confusion in different versions of Firefox
+        var relativePath = file.relativePath || file.webkitRelativePath || file.fileName || file.name;
+        return file.size + '-' + relativePath.replace(/[^0-9a-zA-Z_-]/img, '');
     },
 
     /**
@@ -314,65 +338,65 @@
      * @returns {boolean}
      * @private
      */
-    uploadNextChunk: function (preventEvents) {
-      // In some cases (such as videos) it's really handy to upload the first
-      // and last chunk of a file quickly; this let's the server check the file's
-      // metadata and determine if there's even a point in continuing.
-      var found = false;
-      if (this.opts.prioritizeFirstAndLastChunk) {
-        each(this.files, function (file) {
-          if (!file.paused && file.chunks.length &&
-            file.chunks[0].status() === 'pending') {
-            file.chunks[0].send();
-            found = true;
-            return false;
-          }
-          if (!file.paused && file.chunks.length > 1 &&
-            file.chunks[file.chunks.length - 1].status() === 'pending') {
-            file.chunks[file.chunks.length - 1].send();
-            found = true;
-            return false;
-          }
+    uploadNextChunk: function(preventEvents) {
+        // In some cases (such as videos) it's really handy to upload the first
+        // and last chunk of a file quickly; this let's the server check the file's
+        // metadata and determine if there's even a point in continuing.
+        var found = false;
+        if (this.opts.prioritizeFirstAndLastChunk) {
+            each(this.files, function(file) {
+                if (!file.paused && file.chunks.length &&
+                    file.chunks[0].status() === 'pending') {
+                    file.chunks[0].send();
+                    found = true;
+                    return false;
+                }
+                if (!file.paused && file.chunks.length > 1 &&
+                    file.chunks[file.chunks.length - 1].status() === 'pending') {
+                    file.chunks[file.chunks.length - 1].send();
+                    found = true;
+                    return false;
+                }
+            });
+            if (found) {
+                return found;
+            }
+        }
+
+        // Now, simply look for the next, best thing to upload
+        each(this.files, function(file) {
+            if (!file.paused) {
+                each(file.chunks, function(chunk) {
+                    if (chunk.status() === 'pending') {
+                        chunk.send();
+                        found = true;
+                        return false;
+                    }
+                });
+            }
+            if (found) {
+                return false;
+            }
         });
         if (found) {
-          return found;
+            return true;
         }
-      }
 
-      // Now, simply look for the next, best thing to upload
-      each(this.files, function (file) {
-        if (!file.paused) {
-          each(file.chunks, function (chunk) {
-            if (chunk.status() === 'pending') {
-              chunk.send();
-              found = true;
-              return false;
+        // The are no more outstanding chunks to upload, check is everything is done
+        var outstanding = false;
+        each(this.files, function(file) {
+            if (!file.isComplete()) {
+                outstanding = true;
+                return false;
             }
-          });
+        });
+        if (!outstanding && !preventEvents) {
+            // All chunks have been uploaded, complete
+            async (function() {
+                this.fire('complete');
+            }, this);
         }
-        if (found) {
-          return false;
-        }
-      });
-      if (found) {
-        return true;
-      }
-
-      // The are no more outstanding chunks to upload, check is everything is done
-      var outstanding = false;
-      each(this.files, function (file) {
-        if (!file.isComplete()) {
-          outstanding = true;
-          return false;
-        }
-      });
-      if (!outstanding && !preventEvents) {
-        // All chunks have been uploaded, complete
-        async(function () {
-          this.fire('complete');
-        }, this);
-      }
-      return false;
+        return false;
     },
 
 
@@ -387,54 +411,62 @@
      *  eg: accept: 'image/*'
      * be selected (Chrome only).
      */
-    assignBrowse: function (domNodes, isDirectory, singleFile, attributes) {
-      if (domNodes instanceof Element) {
-        domNodes = [domNodes];
-      }
+    assignBrowse: function(domNodes, isDirectory, singleFile, attributes) {
+        if (domNodes instanceof Element) {
+            domNodes = [domNodes];
+        }
 
-      each(domNodes, function (domNode) {
-        var input;
-        if (domNode.tagName === 'INPUT' && domNode.type === 'file') {
-          input = domNode;
-        } else {
-          input = document.createElement('input');
-          input.setAttribute('type', 'file');
-          // display:none - not working in opera 12
-          extend(input.style, {
-            visibility: 'hidden',
-            position: 'absolute',
-            width: '1px',
-            height: '1px'
-          });
-          // for opera 12 browser, input must be assigned to a document
-          domNode.appendChild(input);
-          // https://developer.mozilla.org/en/using_files_from_web_applications)
-          // event listener is executed two times
-          // first one - original mouse click event
-          // second - input.click(), input is inside domNode
-          domNode.addEventListener('click', function() {
-            input.click();
-          }, false);
-        }
-        if (!this.opts.singleFile && !singleFile) {
-          input.setAttribute('multiple', 'multiple');
-        }
-        if (isDirectory) {
-          input.setAttribute('webkitdirectory', 'webkitdirectory');
-        }
-        each(attributes, function (value, key) {
-          input.setAttribute(key, value);
-        });
-        // When new files are added, simply append them to the overall list
-        var $ = this;
-        input.addEventListener('change', function (e) {
-          console.log(e.target.webkitEntries);
-       	  if (e.target.value) {
-            $.addFiles(e.target.files, e);
-            e.target.value = '';
-       	  }
-        }, false);
-      }, this);
+        each(domNodes, function(domNode) {
+            var input;
+            if (domNode.tagName === 'INPUT' && domNode.type === 'file') {
+                input = domNode;
+            } else {
+                input = document.createElement('input');
+                input.setAttribute('type', 'file');
+                // display:none - not working in opera 12
+                extend(input.style, {
+                    visibility: 'hidden',
+                    position: 'absolute',
+                    width: '1px',
+                    height: '1px'
+                });
+                // for opera 12 browser, input must be assigned to a document
+                domNode.appendChild(input);
+                // https://developer.mozilla.org/en/using_files_from_web_applications)
+                // event listener is executed two times
+                // first one - original mouse click event
+                // second - input.click(), input is inside domNode
+                domNode.addEventListener('click', function() {
+                    input.click();
+                }, false);
+            }
+            if (!this.opts.singleFile && !singleFile) {
+                input.setAttribute('multiple', 'multiple');
+            }
+            if (this.opts.fileTypes && this.opts.fileTypes.length >= 1) {
+                input.setAttribute('accept', this.opts.fileTypes.map(function(e) {
+                    e = e.replace(/\s/g, '').toLowerCase();
+                    if (e.match(/^[^.][^/]+$/)) {
+                        e = '.' + e;
+                    }
+                    return e;
+                }).join(','));
+            }
+            if (isDirectory) {
+                input.setAttribute('webkitdirectory', 'webkitdirectory');
+            }
+            each(attributes, function(value, key) {
+                input.setAttribute(key, value);
+            });
+            // When new files are added, simply append them to the overall list
+            var $ = this;
+            input.addEventListener('change', function(e) {
+                if (e.target.value) {
+                    $.addFiles(e.target.files, e);
+                    e.target.value = '';
+                }
+            }, false);
+        }, this);
     },
 
     /**
@@ -442,15 +474,15 @@
      * @function
      * @param {Element|Array.<Element>} domNodes
      */
-    assignDrop: function (domNodes) {
-      if (typeof domNodes.length === 'undefined') {
-        domNodes = [domNodes];
-      }
-      each(domNodes, function (domNode) {
-        domNode.addEventListener('dragover', this.preventEvent, false);
-        domNode.addEventListener('dragenter', this.preventEvent, false);
-        domNode.addEventListener('drop', this.onDrop, false);
-      }, this);
+    assignDrop: function(domNodes) {
+        if (typeof domNodes.length === 'undefined') {
+            domNodes = [domNodes];
+        }
+        each(domNodes, function(domNode) {
+            domNode.addEventListener('dragover', this.preventEvent, false);
+            domNode.addEventListener('dragenter', this.preventEvent, false);
+            domNode.addEventListener('drop', this.onDrop, false);
+        }, this);
     },
 
     /**
@@ -458,15 +490,15 @@
      * @function
      * @param domNodes
      */
-    unAssignDrop: function (domNodes) {
-      if (typeof domNodes.length === 'undefined') {
-        domNodes = [domNodes];
-      }
-      each(domNodes, function (domNode) {
-        domNode.removeEventListener('dragover', this.preventEvent);
-        domNode.removeEventListener('dragenter', this.preventEvent);
-        domNode.removeEventListener('drop', this.onDrop);
-      }, this);
+    unAssignDrop: function(domNodes) {
+        if (typeof domNodes.length === 'undefined') {
+            domNodes = [domNodes];
+        }
+        each(domNodes, function(domNode) {
+            domNode.removeEventListener('dragover', this.preventEvent);
+            domNode.removeEventListener('dragenter', this.preventEvent);
+            domNode.removeEventListener('drop', this.onDrop);
+        }, this);
     },
 
     /**
@@ -475,15 +507,15 @@
      * @function
      * @returns {boolean}
      */
-    isUploading: function () {
-      var uploading = false;
-      each(this.files, function (file) {
-        if (file.isUploading()) {
-          uploading = true;
-          return false;
-        }
-      });
-      return uploading;
+    isUploading: function() {
+        var uploading = false;
+        each(this.files, function(file) {
+            if (file.isUploading()) {
+                uploading = true;
+                return false;
+            }
+        });
+        return uploading;
     },
 
     /**
@@ -491,78 +523,78 @@
      * @function
      * @returns {boolean|number}
      */
-    _shouldUploadNext: function () {
-      var num = 0;
-      var should = true;
-      var simultaneousUploads = this.opts.simultaneousUploads;
-      each(this.files, function (file) {
-        each(file.chunks, function(chunk) {
-          if (chunk.status() === 'uploading') {
-            num++;
-            if (num >= simultaneousUploads) {
-              should = false;
-              return false;
-            }
-          }
+    _shouldUploadNext: function() {
+        var num = 0;
+        var should = true;
+        var simultaneousUploads = this.opts.simultaneousUploads;
+        each(this.files, function(file) {
+            each(file.chunks, function(chunk) {
+                if (chunk.status() === 'uploading') {
+                    num++;
+                    if (num >= simultaneousUploads) {
+                        should = false;
+                        return false;
+                    }
+                }
+            });
         });
-      });
-      // if should is true then return uploading chunks's length
-      return should && num;
+        // if should is true then return uploading chunks's length
+        return should && num;
     },
 
     /**
      * Start or resume uploading.
      * @function
      */
-    upload: function () {
-      // Make sure we don't start too many uploads at once
-      var ret = this._shouldUploadNext();
-      if (ret === false) {
-        return;
-      }
-      // Kick off the queue
-      this.fire('uploadStart');
-      var started = false;
-      for (var num = 1; num <= this.opts.simultaneousUploads - ret; num++) {
-        started = this.uploadNextChunk(true) || started;
-      }
-      if (!started) {
-        async(function () {
-          this.fire('complete');
-        }, this);
-      }
+    upload: function() {
+        // Make sure we don't start too many uploads at once
+        var ret = this._shouldUploadNext();
+        if (ret === false) {
+            return;
+        }
+        // Kick off the queue
+        this.fire('uploadStart');
+        var started = false;
+        for (var num = 1; num <= this.opts.simultaneousUploads - ret; num++) {
+            started = this.uploadNextChunk(true) || started;
+        }
+        if (!started) {
+            async (function() {
+                this.fire('complete');
+            }, this);
+        }
     },
 
     /**
      * Resume uploading.
      * @function
      */
-    resume: function () {
-      each(this.files, function (file) {
-        if (!file.isComplete()) {
-          file.resume();
-        }
-      });
+    resume: function() {
+        each(this.files, function(file) {
+            if (!file.isComplete()) {
+                file.resume();
+            }
+        });
     },
 
     /**
      * Pause uploading.
      * @function
      */
-    pause: function () {
-      each(this.files, function (file) {
-        file.pause();
-      });
+    pause: function() {
+        each(this.files, function(file) {
+            file.pause();
+        });
     },
 
     /**
      * Cancel upload of all FlowFile objects and remove them from the list.
      * @function
      */
-    cancel: function () {
-      for (var i = this.files.length - 1; i >= 0; i--) {
-        this.files[i].cancel();
-      }
+    cancel: function() {
+        for (var i = this.files.length - 1; i >= 0; i--) {
+            this.files[i].cancel();
+        }
     },
 
     /**
@@ -571,15 +603,15 @@
      * @function
      * @returns {number}
      */
-    progress: function () {
-      var totalDone = 0;
-      var totalSize = 0;
-      // Resume all chunks currently being uploaded
-      each(this.files, function (file) {
-        totalDone += file.progress() * file.size;
-        totalSize += file.size;
-      });
-      return totalSize > 0 ? totalDone / totalSize : 0;
+    progress: function() {
+        var totalDone = 0;
+        var totalSize = 0;
+        // Resume all chunks currently being uploaded
+        each(this.files, function(file) {
+            totalDone += file.progress() * file.size;
+            totalSize += file.size;
+        });
+        return totalSize > 0 ? totalDone / totalSize : 0;
     },
 
     /**
@@ -588,8 +620,8 @@
      * @param {File} file
      * @param {Event} [event] event is optional
      */
-    addFile: function (file, event) {
-      this.addFiles([file], event);
+    addFile: function(file, event) {
+        this.addFiles([file], event);
     },
 
     /**
@@ -598,29 +630,85 @@
      * @param {FileList|Array} fileList
      * @param {Event} [event] event is optional
      */
-    addFiles: function (fileList, event) {
-      var files = [];
-      each(fileList, function (file) {
-        // https://github.com/flowjs/flow.js/issues/55
-        if ((!ie10plus || ie10plus && file.size > 0) && !(file.size % 4096 === 0 && (file.name === '.' || file.fileName === '.'))) {
-          var uniqueIdentifier = this.generateUniqueIdentifier(file);
-          if (this.opts.allowDuplicateUploads || !this.getFromUniqueIdentifier(uniqueIdentifier)) {
-            var f = new FlowFile(this, file, uniqueIdentifier);
-            if (this.fire('fileAdded', f, event)) {
-              files.push(f);
+    addFiles: function(fileList, event, disableFolder) {
+        var files = [];
+        each(fileList, function(file) {
+            // https://github.com/flowjs/flow.js/issues/55
+            if ((!ie10plus || ie10plus && file.size > 0) && !(file.size % 4096 === 0 && (file.name === '.' || file.fileName === '.'))) {
+                var uniqueIdentifier = this.generateUniqueIdentifier(file);
+                if (this.opts.allowDuplicateUploads || !this.getFromUniqueIdentifier(uniqueIdentifier)) {
+                    var f = new FlowFile(this, file, uniqueIdentifier);
+                    if (this.fire('fileAdded', f, event)) {
+                        files.push(f);
+                    }
+                }
             }
-          }
-        }
-      }, this);
-      if (this.fire('filesAdded', files, event)) {
-        each(files, function (file) {
-          if (this.opts.singleFile && this.files.length > 0) {
-            this.removeFile(this.files[0]);
-          }
-          this.files.push(file);
         }, this);
-        this.fire('filesSubmitted', files, event);
-      }
+
+        var folders = { tree: [], flat: []};
+        
+        if(typeof disableFolder == "undefined") {
+            const list = files.reduce(function(sum, item) {
+                let path = item.relativePath.split('/');
+                path.pop();
+                if( path.length > 0 ){
+                    sum.push(path.join('/'));
+                }
+                return sum;
+            },[]);
+    
+            const tree = {};
+            const addPath = (path, tree) => {
+                // helper function to create child objects
+                const createChild = (name) => ({
+                    id: MD5(path),
+                    name,
+                    path: path,
+                    items: []
+                });
+                
+                // split path to array of folders and files
+                const parts = path.split("/");
+                
+                // create tree if empty
+                if (!tree.name) {
+                    folders.flat.push(createChild(parts[0]));
+                    Object.assign(tree, createChild(parts[0]));
+                }
+                
+                // check if root folder is correct
+                if (tree.name !== parts[0]) {
+                    throw new Error(`Root folder is not "${tree.name}"`);
+                }
+                parts.shift();
+                
+                // check and add other path parts
+                parts.reduce((current, p) => {
+                    const child = current.items.find((child) => child.name === p);
+                    if (child) {
+                    return child;
+                    }
+                
+                    const newChild = createChild(p);
+                    folders.flat.push(newChild);
+                    current.items.push(newChild);
+                    return newChild;
+                }, tree);
+            };
+            list.forEach((path) => addPath(path, tree));
+            folders.tree = [tree];
+        }
+
+        if (this.fire('filesAdded', files, event)) {
+            each(files, function(file) {
+                if (this.opts.singleFile && this.files.length > 0) {
+                    this.removeFile(this.files[0]);
+                }
+                this.files.push(file);
+            }, this);
+            this.folders = folders;
+            this.fire('filesSubmitted', files, event);
+        }
     },
 
 
@@ -629,14 +717,14 @@
      * @function
      * @param {FlowFile} file
      */
-    removeFile: function (file) {
-      for (var i = this.files.length - 1; i >= 0; i--) {
-        if (this.files[i] === file) {
-          this.files.splice(i, 1);
-          file.abort();
-          this.fire('fileRemoved', file);
+    removeFile: function(file) {
+        for (var i = this.files.length - 1; i >= 0; i--) {
+            if (this.files[i] === file) {
+                this.files.splice(i, 1);
+                file.abort();
+                this.fire('fileRemoved', file);
+            }
         }
-      }
     },
 
     /**
@@ -645,14 +733,14 @@
      * @param {string} uniqueIdentifier
      * @returns {boolean|FlowFile} false if file was not found
      */
-    getFromUniqueIdentifier: function (uniqueIdentifier) {
-      var ret = false;
-      each(this.files, function (file) {
-        if (file.uniqueIdentifier === uniqueIdentifier) {
-          ret = file;
-        }
-      });
-      return ret;
+    getFromUniqueIdentifier: function(uniqueIdentifier) {
+        var ret = false;
+        each(this.files, function(file) {
+            if (file.uniqueIdentifier === uniqueIdentifier) {
+                ret = file;
+            }
+        });
+        return ret;
     },
 
     /**
@@ -660,12 +748,12 @@
      * @function
      * @returns {number}
      */
-    getSize: function () {
-      var totalSize = 0;
-      each(this.files, function (file) {
-        totalSize += file.size;
-      });
-      return totalSize;
+    getSize: function() {
+        var totalSize = 0;
+        each(this.files, function(file) {
+            totalSize += file.size;
+        });
+        return totalSize;
     },
 
     /**
@@ -673,12 +761,12 @@
      * @function
      * @returns {number}
      */
-    sizeUploaded: function () {
-      var size = 0;
-      each(this.files, function (file) {
-        size += file.sizeUploaded();
-      });
-      return size;
+    sizeUploaded: function() {
+        var size = 0;
+        each(this.files, function(file) {
+            size += file.sizeUploaded();
+        });
+        return size;
     },
 
     /**
@@ -687,39 +775,37 @@
      * @function
      * @returns {number}
      */
-    timeRemaining: function () {
-      var sizeDelta = 0;
-      var averageSpeed = 0;
-      each(this.files, function (file) {
-        if (!file.paused && !file.error) {
-          sizeDelta += file.size - file.sizeUploaded();
-          averageSpeed += file.averageSpeed;
+    timeRemaining: function() {
+        var sizeDelta = 0;
+        var averageSpeed = 0;
+        each(this.files, function(file) {
+            if (!file.paused && !file.error) {
+                sizeDelta += file.size - file.sizeUploaded();
+                averageSpeed += file.averageSpeed;
+            }
+        });
+        if (sizeDelta && !averageSpeed) {
+            return Number.POSITIVE_INFINITY;
         }
-      });
-      if (sizeDelta && !averageSpeed) {
-        return Number.POSITIVE_INFINITY;
-      }
-      if (!sizeDelta && !averageSpeed) {
-        return 0;
-      }
-      return Math.floor(sizeDelta / averageSpeed);
+        if (!sizeDelta && !averageSpeed) {
+            return 0;
+        }
+        return Math.floor(sizeDelta / averageSpeed);
     }
-  };
+};
 
 
 
 
-
-
-  /**
-   * FlowFile class
-   * @name FlowFile
-   * @param {Flow} flowObj
-   * @param {File} file
-   * @param {string} uniqueIdentifier
-   * @constructor
-   */
-  function FlowFile(flowObj, file, uniqueIdentifier) {
+/**
+ * FlowFile class
+ * @name FlowFile
+ * @param {Flow} flowObj
+ * @param {File} file
+ * @param {string} uniqueIdentifier
+ * @constructor
+ */
+function FlowFile(flowObj, file, uniqueIdentifier) {
 
     /**
      * Reference to parent Flow instance
@@ -815,25 +901,25 @@
     this._prevProgress = 0;
 
     this.bootstrap();
-  }
+}
 
-  FlowFile.prototype = {
+FlowFile.prototype = {
     /**
      * Update speed parameters
      * @link http://stackoverflow.com/questions/2779600/how-to-estimate-download-time-remaining-accurately
      * @function
      */
-    measureSpeed: function () {
-      var timeSpan = Date.now() - this._lastProgressCallback;
-      if (!timeSpan) {
-        return ;
-      }
-      var smoothingFactor = this.flowObj.opts.speedSmoothingFactor;
-      var uploaded = this.sizeUploaded();
-      // Prevent negative upload speed after file upload resume
-      this.currentSpeed = Math.max((uploaded - this._prevUploadedSize) / timeSpan * 1000, 0);
-      this.averageSpeed = smoothingFactor * this.currentSpeed + (1 - smoothingFactor) * this.averageSpeed;
-      this._prevUploadedSize = uploaded;
+    measureSpeed: function() {
+        var timeSpan = Date.now() - this._lastProgressCallback;
+        if (!timeSpan) {
+            return;
+        }
+        var smoothingFactor = this.flowObj.opts.speedSmoothingFactor;
+        var uploaded = this.sizeUploaded();
+        // Prevent negative upload speed after file upload resume
+        this.currentSpeed = Math.max((uploaded - this._prevUploadedSize) / timeSpan * 1000, 0);
+        this.averageSpeed = smoothingFactor * this.currentSpeed + (1 - smoothingFactor) * this.averageSpeed;
+        this._prevUploadedSize = uploaded;
     },
 
     /**
@@ -844,42 +930,42 @@
      * @param {string} event can be 'progress', 'success', 'error' or 'retry'
      * @param {string} [message]
      */
-    chunkEvent: function (chunk, event, message) {
-      switch (event) {
-        case 'progress':
-          if (Date.now() - this._lastProgressCallback <
-            this.flowObj.opts.progressCallbacksInterval) {
-            break;
-          }
-          this.measureSpeed();
-          this.flowObj.fire('fileProgress', this, chunk);
-          this.flowObj.fire('progress');
-          this._lastProgressCallback = Date.now();
-          break;
-        case 'error':
-          this.error = true;
-          this.abort(true);
-          this.flowObj.fire('fileError', this, message, chunk);
-          this.flowObj.fire('error', message, this, chunk);
-          break;
-        case 'success':
-          if (this.error) {
-            return;
-          }
-          this.measureSpeed();
-          this.flowObj.fire('fileProgress', this, chunk);
-          this.flowObj.fire('progress');
-          this._lastProgressCallback = Date.now();
-          if (this.isComplete()) {
-            this.currentSpeed = 0;
-            this.averageSpeed = 0;
-            this.flowObj.fire('fileSuccess', this, message, chunk);
-          }
-          break;
-        case 'retry':
-          this.flowObj.fire('fileRetry', this, chunk);
-          break;
-      }
+    chunkEvent: function(chunk, event, message) {
+        switch (event) {
+            case 'progress':
+                if (Date.now() - this._lastProgressCallback <
+                    this.flowObj.opts.progressCallbacksInterval) {
+                    break;
+                }
+                this.measureSpeed();
+                this.flowObj.fire('fileProgress', this, chunk);
+                this.flowObj.fire('progress');
+                this._lastProgressCallback = Date.now();
+                break;
+            case 'error':
+                this.error = true;
+                this.abort(true);
+                this.flowObj.fire('fileError', this, message, chunk);
+                this.flowObj.fire('error', message, this, chunk);
+                break;
+            case 'success':
+                if (this.error) {
+                    return;
+                }
+                this.measureSpeed();
+                this.flowObj.fire('fileProgress', this, chunk);
+                this.flowObj.fire('progress');
+                this._lastProgressCallback = Date.now();
+                if (this.isComplete()) {
+                    this.currentSpeed = 0;
+                    this.averageSpeed = 0;
+                    this.flowObj.fire('fileSuccess', this, message, chunk);
+                }
+                break;
+            case 'retry':
+                this.flowObj.fire('fileRetry', this, chunk);
+                break;
+        }
     },
 
     /**
@@ -887,8 +973,8 @@
      * @function
      */
     pause: function() {
-      this.paused = true;
-      this.abort();
+        this.paused = true;
+        this.abort();
     },
 
     /**
@@ -896,68 +982,68 @@
      * @function
      */
     resume: function() {
-      this.paused = false;
-      this.flowObj.upload();
+        this.paused = false;
+        this.flowObj.upload();
     },
 
     /**
      * Abort current upload
      * @function
      */
-    abort: function (reset) {
-      this.currentSpeed = 0;
-      this.averageSpeed = 0;
-      var chunks = this.chunks;
-      if (reset) {
-        this.chunks = [];
-      }
-      each(chunks, function (c) {
-        if (c.status() === 'uploading') {
-          c.abort();
-          this.flowObj.uploadNextChunk();
+    abort: function(reset) {
+        this.currentSpeed = 0;
+        this.averageSpeed = 0;
+        var chunks = this.chunks;
+        if (reset) {
+            this.chunks = [];
         }
-      }, this);
+        each(chunks, function(c) {
+            if (c.status() === 'uploading') {
+                c.abort();
+                this.flowObj.uploadNextChunk();
+            }
+        }, this);
     },
 
     /**
      * Cancel current upload and remove from a list
      * @function
      */
-    cancel: function () {
-      this.flowObj.removeFile(this);
+    cancel: function() {
+        this.flowObj.removeFile(this);
     },
 
     /**
      * Retry aborted file upload
      * @function
      */
-    retry: function () {
-      this.bootstrap();
-      this.flowObj.upload();
+    retry: function() {
+        this.bootstrap();
+        this.flowObj.upload();
     },
 
     /**
      * Clear current chunks and slice file again
      * @function
      */
-    bootstrap: function () {
-      if (typeof this.flowObj.opts.initFileFn === "function") {
-        this.flowObj.opts.initFileFn(this);
-      }
+    bootstrap: function() {
+        if (typeof this.flowObj.opts.initFileFn === "function") {
+            this.flowObj.opts.initFileFn(this);
+        }
 
-      this.abort(true);
-      this.error = false;
-      // Rebuild stack of chunks from file
-      this._prevProgress = 0;
-      var round = this.flowObj.opts.forceChunkSize ? Math.ceil : Math.floor;
-      var chunks = Math.max(
-        round(this.size / this.flowObj.opts.chunkSize), 1
-      );
-      for (var offset = 0; offset < chunks; offset++) {
-        this.chunks.push(
-          new FlowChunk(this.flowObj, this, offset)
+        this.abort(true);
+        this.error = false;
+        // Rebuild stack of chunks from file
+        this._prevProgress = 0;
+        var round = this.flowObj.opts.forceChunkSize ? Math.ceil : Math.floor;
+        var chunks = Math.max(
+            round(this.size / this.flowObj.opts.chunkSize), 1
         );
-      }
+        for (var offset = 0; offset < chunks; offset++) {
+            this.chunks.push(
+                new FlowChunk(this.flowObj, this, offset)
+            );
+        }
     },
 
     /**
@@ -965,24 +1051,24 @@
      * @function
      * @returns {number} from 0 to 1
      */
-    progress: function () {
-      if (this.error) {
-        return 1;
-      }
-      if (this.chunks.length === 1) {
-        this._prevProgress = Math.max(this._prevProgress, this.chunks[0].progress());
+    progress: function() {
+        if (this.error) {
+            return 1;
+        }
+        if (this.chunks.length === 1) {
+            this._prevProgress = Math.max(this._prevProgress, this.chunks[0].progress());
+            return this._prevProgress;
+        }
+        // Sum up progress across everything
+        var bytesLoaded = 0;
+        each(this.chunks, function(c) {
+            // get chunk progress relative to entire file
+            bytesLoaded += c.progress() * (c.endByte - c.startByte);
+        });
+        var percent = bytesLoaded / this.size;
+        // We don't want to lose percentages when an upload is paused
+        this._prevProgress = Math.max(this._prevProgress, percent > 0.9999 ? 1 : percent);
         return this._prevProgress;
-      }
-      // Sum up progress across everything
-      var bytesLoaded = 0;
-      each(this.chunks, function (c) {
-        // get chunk progress relative to entire file
-        bytesLoaded += c.progress() * (c.endByte - c.startByte);
-      });
-      var percent = bytesLoaded / this.size;
-      // We don't want to lose percentages when an upload is paused
-      this._prevProgress = Math.max(this._prevProgress, percent > 0.9999 ? 1 : percent);
-      return this._prevProgress;
     },
 
     /**
@@ -990,15 +1076,15 @@
      * @function
      * @returns {boolean}
      */
-    isUploading: function () {
-      var uploading = false;
-      each(this.chunks, function (chunk) {
-        if (chunk.status() === 'uploading') {
-          uploading = true;
-          return false;
-        }
-      });
-      return uploading;
+    isUploading: function() {
+        var uploading = false;
+        each(this.chunks, function(chunk) {
+            if (chunk.status() === 'uploading') {
+                uploading = true;
+                return false;
+            }
+        });
+        return uploading;
     },
 
     /**
@@ -1006,16 +1092,16 @@
      * @function
      * @returns {boolean}
      */
-    isComplete: function () {
-      var outstanding = false;
-      each(this.chunks, function (chunk) {
-        var status = chunk.status();
-        if (status === 'pending' || status === 'uploading' || status === 'reading' || chunk.preprocessState === 1 || chunk.readState === 1) {
-          outstanding = true;
-          return false;
-        }
-      });
-      return !outstanding;
+    isComplete: function() {
+        var outstanding = false;
+        each(this.chunks, function(chunk) {
+            var status = chunk.status();
+            if (status === 'pending' || status === 'uploading' || status === 'reading' || chunk.preprocessState === 1 || chunk.readState === 1) {
+                outstanding = true;
+                return false;
+            }
+        });
+        return !outstanding;
     },
 
     /**
@@ -1023,12 +1109,12 @@
      * @function
      * @returns {number}
      */
-    sizeUploaded: function () {
-      var size = 0;
-      each(this.chunks, function (chunk) {
-        size += chunk.sizeUploaded();
-      });
-      return size;
+    sizeUploaded: function() {
+        var size = 0;
+        each(this.chunks, function(chunk) {
+            size += chunk.sizeUploaded();
+        });
+        return size;
     },
 
     /**
@@ -1037,18 +1123,18 @@
      * @function
      * @returns {number}
      */
-    timeRemaining: function () {
-      if (this.paused || this.error) {
-        return 0;
-      }
-      var delta = this.size - this.sizeUploaded();
-      if (delta && !this.averageSpeed) {
-        return Number.POSITIVE_INFINITY;
-      }
-      if (!delta && !this.averageSpeed) {
-        return 0;
-      }
-      return Math.floor(delta / this.averageSpeed);
+    timeRemaining: function() {
+        if (this.paused || this.error) {
+            return 0;
+        }
+        var delta = this.size - this.sizeUploaded();
+        if (delta && !this.averageSpeed) {
+            return Number.POSITIVE_INFINITY;
+        }
+        if (!delta && !this.averageSpeed) {
+            return 0;
+        }
+        return Math.floor(delta / this.averageSpeed);
     },
 
     /**
@@ -1056,8 +1142,8 @@
      * @function
      * @returns {string}
      */
-    getType: function () {
-      return this.file.type && this.file.type.split('/')[1];
+    getType: function() {
+        return this.file.type && this.file.type.split('/')[1];
     },
 
     /**
@@ -1065,40 +1151,40 @@
      * @function
      * @returns {string}
      */
-    getExtension: function () {
-      return this.name.substr((~-this.name.lastIndexOf(".") >>> 0) + 2).toLowerCase();
+    getExtension: function() {
+        return this.name.substr((~-this.name.lastIndexOf(".") >>> 0) + 2).toLowerCase();
     }
-  };
+};
 
-  /**
-   * Default read function using the webAPI
-   *
-   * @function webAPIFileRead(fileObj, startByte, endByte, fileType, chunk)
-   *
-   */
-  function webAPIFileRead(fileObj, startByte, endByte, fileType, chunk) {
+/**
+ * Default read function using the webAPI
+ *
+ * @function webAPIFileRead(fileObj, startByte, endByte, fileType, chunk)
+ *
+ */
+function webAPIFileRead(fileObj, startByte, endByte, fileType, chunk) {
     var function_name = 'slice';
 
     if (fileObj.file.slice)
-      function_name =  'slice';
+        function_name = 'slice';
     else if (fileObj.file.mozSlice)
-      function_name = 'mozSlice';
+        function_name = 'mozSlice';
     else if (fileObj.file.webkitSlice)
-      function_name = 'webkitSlice';
+        function_name = 'webkitSlice';
 
     chunk.readFinished(fileObj.file[function_name](startByte, endByte, fileType));
-  }
+}
 
 
-  /**
-   * Class for storing a single chunk
-   * @name FlowChunk
-   * @param {Flow} flowObj
-   * @param {FlowFile} fileObj
-   * @param {number} offset
-   * @constructor
-   */
-  function FlowChunk(flowObj, fileObj, offset) {
+/**
+ * Class for storing a single chunk
+ * @name FlowChunk
+ * @param {Flow} flowObj
+ * @param {FlowFile} fileObj
+ * @param {number} offset
+ * @constructor
+ */
+function FlowChunk(flowObj, fileObj, offset) {
 
     /**
      * Reference to parent flow object
@@ -1174,17 +1260,17 @@
     this.startByte = this.offset * this.chunkSize;
 
     /**
-      * Compute the endbyte in a file
-      *
-      */
+     * Compute the endbyte in a file
+     *
+     */
     this.computeEndByte = function() {
-      var endByte = Math.min(this.fileObj.size, (this.offset + 1) * this.chunkSize);
-      if (this.fileObj.size - endByte < this.chunkSize && !this.flowObj.opts.forceChunkSize) {
-        // The last chunk will be bigger than the chunk size,
-        // but less than 2 * this.chunkSize
-        endByte = this.fileObj.size;
-      }
-      return endByte;
+        var endByte = Math.min(this.fileObj.size, (this.offset + 1) * this.chunkSize);
+        if (this.fileObj.size - endByte < this.chunkSize && !this.flowObj.opts.forceChunkSize) {
+            // The last chunk will be bigger than the chunk size,
+            // but less than 2 * this.chunkSize
+            endByte = this.fileObj.size;
+        }
+        return endByte;
     }
 
     /**
@@ -1206,21 +1292,21 @@
      * @param event
      * @param {...} args arguments of a callback
      */
-    this.event = function (event, args) {
-      args = Array.prototype.slice.call(arguments);
-      args.unshift($);
-      $.fileObj.chunkEvent.apply($.fileObj, args);
+    this.event = function(event, args) {
+        args = Array.prototype.slice.call(arguments);
+        args.unshift($);
+        $.fileObj.chunkEvent.apply($.fileObj, args);
     };
     /**
      * Catch progress event
      * @param {ProgressEvent} event
      */
     this.progressHandler = function(event) {
-      if (event.lengthComputable) {
-        $.loaded = event.loaded ;
-        $.total = event.total;
-      }
-      $.event('progress', event);
+        if (event.lengthComputable) {
+            $.loaded = event.loaded;
+            $.total = event.total;
+        }
+        $.event('progress', event);
     };
 
     /**
@@ -1228,20 +1314,20 @@
      * @param {Event} event
      */
     this.testHandler = function(event) {
-      var status = $.status(true);
-      if (status === 'error') {
-        $.event(status, $.message());
-        $.flowObj.uploadNextChunk();
-      } else if (status === 'success') {
-        $.tested = true;
-        $.event(status, $.message());
-        $.flowObj.uploadNextChunk();
-      } else if (!$.fileObj.paused) {
-        // Error might be caused by file pause method
-        // Chunks does not exist on the server side
-        $.tested = true;
-        $.send();
-      }
+        var status = $.status(true);
+        if (status === 'error') {
+            $.event(status, $.message());
+            $.flowObj.uploadNextChunk();
+        } else if (status === 'success') {
+            $.tested = true;
+            $.event(status, $.message());
+            $.flowObj.uploadNextChunk();
+        } else if (!$.fileObj.paused) {
+            // Error might be caused by file pause method
+            // Chunks does not exist on the server side
+            $.tested = true;
+            $.send();
+        }
     };
 
     /**
@@ -1249,44 +1335,44 @@
      * @param {Event} event
      */
     this.doneHandler = function(event) {
-      var status = $.status();
-      if (status === 'success' || status === 'error') {
-        delete this.data;
-        $.event(status, $.message());
-        $.flowObj.uploadNextChunk();
-      } else {
-        $.event('retry', $.message());
-        $.pendingRetry = true;
-        $.abort();
-        $.retries++;
-        var retryInterval = $.flowObj.opts.chunkRetryInterval;
-        if (retryInterval !== null) {
-          setTimeout(function () {
-            $.send();
-          }, retryInterval);
+        var status = $.status();
+        if (status === 'success' || status === 'error') {
+            delete this.data;
+            $.event(status, $.message());
+            $.flowObj.uploadNextChunk();
         } else {
-          $.send();
+            $.event('retry', $.message());
+            $.pendingRetry = true;
+            $.abort();
+            $.retries++;
+            var retryInterval = $.flowObj.opts.chunkRetryInterval;
+            if (retryInterval !== null) {
+                setTimeout(function() {
+                    $.send();
+                }, retryInterval);
+            } else {
+                $.send();
+            }
         }
-      }
     };
-  }
+}
 
-  FlowChunk.prototype = {
+FlowChunk.prototype = {
     /**
      * Get params for a request
      * @function
      */
-    getParams: function () {
-      return {
-        ChunkNumber: this.offset + 1,
-        ChunkSize: this.flowObj.opts.chunkSize,
-        CurrentChunkSize: this.endByte - this.startByte,
-        TotalSize: this.fileObj.size,
-        Identifier: this.fileObj.uniqueIdentifier,
-        Filename: this.fileObj.name,
-        RelativePath: this.fileObj.relativePath,
-        TotalChunks: this.fileObj.chunks.length
-      };
+    getParams: function() {
+        return {
+            ChunkNumber: this.offset + 1,
+            ChunkSize: this.flowObj.opts.chunkSize,
+            CurrentChunkSize: this.endByte - this.startByte,
+            TotalSize: this.fileObj.size,
+            Identifier: this.fileObj.uniqueIdentifier,
+            Filename: this.fileObj.name,
+            RelativePath: this.fileObj.relativePath,
+            TotalChunks: this.fileObj.chunks.length
+        };
     },
 
     /**
@@ -1295,13 +1381,13 @@
      * @param params
      * @returns {string}
      */
-    getTarget: function(target, params){
-      if(target.indexOf('?') < 0) {
-        target += '?';
-      } else {
-        target += '&';
-      }
-      return target + params.join('&');
+    getTarget: function(target, params) {
+        if (target.indexOf('?') < 0) {
+            target += '?';
+        } else {
+            target += '&';
+        }
+        return target + params.join('&');
     },
 
     /**
@@ -1309,37 +1395,37 @@
      * been uploaded in a previous session
      * @function
      */
-    test: function () {
-      // Set up request and listen for event
-      this.xhr = new XMLHttpRequest();
-      this.xhr.addEventListener("load", this.testHandler, false);
-      this.xhr.addEventListener("error", this.testHandler, false);
-      var testMethod = evalOpts(this.flowObj.opts.testMethod, this.fileObj, this);
-      var data = this.prepareXhrRequest(testMethod, true);
-      this.xhr.send(data);
+    test: function() {
+        // Set up request and listen for event
+        this.xhr = new XMLHttpRequest();
+        this.xhr.addEventListener("load", this.testHandler, false);
+        this.xhr.addEventListener("error", this.testHandler, false);
+        var testMethod = evalOpts(this.flowObj.opts.testMethod, this.fileObj, this);
+        var data = this.prepareXhrRequest(testMethod, true);
+        this.xhr.send(data);
     },
 
     /**
      * Finish preprocess state
      * @function
      */
-    preprocessFinished: function () {
-      // Re-compute the endByte after the preprocess function to allow an
-      // implementer of preprocess to set the fileObj size
-      this.endByte = this.computeEndByte();
+    preprocessFinished: function() {
+        // Re-compute the endByte after the preprocess function to allow an
+        // implementer of preprocess to set the fileObj size
+        this.endByte = this.computeEndByte();
 
-      this.preprocessState = 2;
-      this.send();
+        this.preprocessState = 2;
+        this.send();
     },
 
     /**
      * Finish read state
      * @function
      */
-    readFinished: function (bytes) {
-      this.readState = 2;
-      this.bytes = bytes;
-      this.send();
+    readFinished: function(bytes) {
+        this.readState = 2;
+        this.bytes = bytes;
+        this.send();
     },
 
 
@@ -1347,58 +1433,58 @@
      * Uploads the actual data in a POST call
      * @function
      */
-    send: function () {
-      var preprocess = this.flowObj.opts.preprocess;
-      var read = this.flowObj.opts.readFileFn;
-      if (typeof preprocess === 'function') {
-        switch (this.preprocessState) {
-          case 0:
-            this.preprocessState = 1;
-            preprocess(this);
-            return;
-          case 1:
+    send: function() {
+        var preprocess = this.flowObj.opts.preprocess;
+        var read = this.flowObj.opts.readFileFn;
+        if (typeof preprocess === 'function') {
+            switch (this.preprocessState) {
+                case 0:
+                    this.preprocessState = 1;
+                    preprocess(this);
+                    return;
+                case 1:
+                    return;
+            }
+        }
+        switch (this.readState) {
+            case 0:
+                this.readState = 1;
+                read(this.fileObj, this.startByte, this.endByte, this.fileObj.file.type, this);
+                return;
+            case 1:
+                return;
+        }
+        if (this.flowObj.opts.testChunks && !this.tested) {
+            this.test();
             return;
         }
-      }
-      switch (this.readState) {
-        case 0:
-          this.readState = 1;
-          read(this.fileObj, this.startByte, this.endByte, this.fileObj.file.type, this);
-          return;
-        case 1:
-          return;
-      }
-      if (this.flowObj.opts.testChunks && !this.tested) {
-        this.test();
-        return;
-      }
 
-      this.loaded = 0;
-      this.total = 0;
-      this.pendingRetry = false;
+        this.loaded = 0;
+        this.total = 0;
+        this.pendingRetry = false;
 
-      // Set up request and listen for event
-      this.xhr = new XMLHttpRequest();
-      this.xhr.upload.addEventListener('progress', this.progressHandler, false);
-      this.xhr.addEventListener("load", this.doneHandler, false);
-      this.xhr.addEventListener("error", this.doneHandler, false);
+        // Set up request and listen for event
+        this.xhr = new XMLHttpRequest();
+        this.xhr.upload.addEventListener('progress', this.progressHandler, false);
+        this.xhr.addEventListener("load", this.doneHandler, false);
+        this.xhr.addEventListener("error", this.doneHandler, false);
 
-      var uploadMethod = evalOpts(this.flowObj.opts.uploadMethod, this.fileObj, this);
-      var data = this.prepareXhrRequest(uploadMethod, false, this.flowObj.opts.method, this.bytes);
-      this.xhr.send(data);
+        var uploadMethod = evalOpts(this.flowObj.opts.uploadMethod, this.fileObj, this);
+        var data = this.prepareXhrRequest(uploadMethod, false, this.flowObj.opts.method, this.bytes);
+        this.xhr.send(data);
     },
 
     /**
      * Abort current xhr request
      * @function
      */
-    abort: function () {
-      // Abort and reset
-      var xhr = this.xhr;
-      this.xhr = null;
-      if (xhr) {
-        xhr.abort();
-      }
+    abort: function() {
+        // Abort and reset
+        var xhr = this.xhr;
+        this.xhr = null;
+        if (xhr) {
+            xhr.abort();
+        }
     },
 
     /**
@@ -1406,35 +1492,35 @@
      * @function
      * @returns {string} 'pending', 'uploading', 'success', 'error'
      */
-    status: function (isTest) {
-      if (this.readState === 1) {
-        return 'reading';
-      } else if (this.pendingRetry || this.preprocessState === 1) {
-        // if pending retry then that's effectively the same as actively uploading,
-        // there might just be a slight delay before the retry starts
-        return 'uploading';
-      } else if (!this.xhr) {
-        return 'pending';
-      } else if (this.xhr.readyState < 4) {
-        // Status is really 'OPENED', 'HEADERS_RECEIVED'
-        // or 'LOADING' - meaning that stuff is happening
-        return 'uploading';
-      } else {
-        if (this.flowObj.opts.successStatuses.indexOf(this.xhr.status) > -1) {
-          // HTTP 200, perfect
-		      // HTTP 202 Accepted - The request has been accepted for processing, but the processing has not been completed.
-          return 'success';
-        } else if (this.flowObj.opts.permanentErrors.indexOf(this.xhr.status) > -1 ||
-            !isTest && this.retries >= this.flowObj.opts.maxChunkRetries) {
-          // HTTP 413/415/500/501, permanent error
-          return 'error';
+    status: function(isTest) {
+        if (this.readState === 1) {
+            return 'reading';
+        } else if (this.pendingRetry || this.preprocessState === 1) {
+            // if pending retry then that's effectively the same as actively uploading,
+            // there might just be a slight delay before the retry starts
+            return 'uploading';
+        } else if (!this.xhr) {
+            return 'pending';
+        } else if (this.xhr.readyState < 4) {
+            // Status is really 'OPENED', 'HEADERS_RECEIVED'
+            // or 'LOADING' - meaning that stuff is happening
+            return 'uploading';
         } else {
-          // this should never happen, but we'll reset and queue a retry
-          // a likely case for this would be 503 service unavailable
-          this.abort();
-          return 'pending';
+            if (this.flowObj.opts.successStatuses.indexOf(this.xhr.status) > -1) {
+                // HTTP 200, perfect
+                // HTTP 202 Accepted - The request has been accepted for processing, but the processing has not been completed.
+                return 'success';
+            } else if (this.flowObj.opts.permanentErrors.indexOf(this.xhr.status) > -1 ||
+                !isTest && this.retries >= this.flowObj.opts.maxChunkRetries) {
+                // HTTP 413/415/500/501, permanent error
+                return 'error';
+            } else {
+                // this should never happen, but we'll reset and queue a retry
+                // a likely case for this would be 503 service unavailable
+                this.abort();
+                return 'pending';
+            }
         }
-      }
     },
 
     /**
@@ -1442,8 +1528,8 @@
      * @function
      * @returns {String}
      */
-    message: function () {
-      return this.xhr ? this.xhr.responseText : '';
+    message: function() {
+        return this.xhr ? this.xhr.responseText : '';
     },
 
     /**
@@ -1451,18 +1537,18 @@
      * @function
      * @returns {number}
      */
-    progress: function () {
-      if (this.pendingRetry) {
-        return 0;
-      }
-      var s = this.status();
-      if (s === 'success' || s === 'error') {
-        return 1;
-      } else if (s === 'pending') {
-        return 0;
-      } else {
-        return this.total > 0 ? this.loaded / this.total : 0;
-      }
+    progress: function() {
+        if (this.pendingRetry) {
+            return 0;
+        }
+        var s = this.status();
+        if (s === 'success' || s === 'error') {
+            return 1;
+        } else if (s === 'pending') {
+            return 0;
+        } else {
+            return this.total > 0 ? this.loaded / this.total : 0;
+        }
     },
 
     /**
@@ -1470,13 +1556,13 @@
      * @function
      * @returns {number}
      */
-    sizeUploaded: function () {
-      var size = this.endByte - this.startByte;
-      // can't return only chunk.loaded value, because it is bigger than chunk size
-      if (this.status() !== 'success') {
-        size = this.progress() * size;
-      }
-      return size;
+    sizeUploaded: function() {
+        var size = this.endByte - this.startByte;
+        // can't return only chunk.loaded value, because it is bigger than chunk size
+        if (this.status() !== 'success') {
+            size = this.progress() * size;
+        }
+        return size;
     },
 
     /**
@@ -1488,165 +1574,144 @@
      * @returns {FormData|Blob|Null} data to send
      */
     prepareXhrRequest: function(method, isTest, paramsMethod, blob) {
-      // Add data from the query options
-      var query = evalOpts(this.flowObj.opts.query, this.fileObj, this, isTest);
-      query = extend(query, this.getParams());
-
-      var target = evalOpts(this.flowObj.opts.target, this.fileObj, this, isTest);
-      var data = null;
-      if (method === 'GET' || paramsMethod === 'octet') {
         // Add data from the query options
-        var params = [];
-        each(query, function (v, k) {
-          params.push([encodeURIComponent(k), encodeURIComponent(v)].join('='));
-        });
-        target = this.getTarget(target, params);
-        data = blob || null;
-      } else {
-        // Add data from the query options
-        data = new FormData();
-        each(query, function (v, k) {
-          data.append(k, v);
-        });
-        if (typeof blob !== "undefined") data.append(this.flowObj.opts.fileParameterName, blob, this.fileObj.file.name);
-      }
+        var query = evalOpts(this.flowObj.opts.query, this.fileObj, this, isTest);
+        query = extend(query, this.getParams());
 
-      this.xhr.open(method, target, true);
-      this.xhr.withCredentials = this.flowObj.opts.withCredentials;
+        var target = evalOpts(this.flowObj.opts.target, this.fileObj, this, isTest);
+        var data = null;
+        if (method === 'GET' || paramsMethod === 'octet') {
+            // Add data from the query options
+            var params = [];
+            each(query, function(v, k) {
+                params.push([encodeURIComponent(k), encodeURIComponent(v)].join('='));
+            });
+            target = this.getTarget(target, params);
+            data = blob || null;
+        } else {
+            // Add data from the query options
+            data = new FormData();
+            each(query, function(v, k) {
+                data.append(k, v);
+            });
+            if (typeof blob !== "undefined") data.append(this.flowObj.opts.fileParameterName, blob, this.fileObj.file.name);
+        }
 
-      // Add data from header options
-      each(evalOpts(this.flowObj.opts.headers, this.fileObj, this, isTest), function (v, k) {
-        this.xhr.setRequestHeader(k, v);
-      }, this);
+        this.xhr.open(method, target, true);
+        this.xhr.withCredentials = this.flowObj.opts.withCredentials;
 
-      return data;
+        // Add data from header options
+        each(evalOpts(this.flowObj.opts.headers, this.fileObj, this, isTest), function(v, k) {
+            this.xhr.setRequestHeader(k, v);
+        }, this);
+
+        return data;
     }
-  };
+};
 
-  /**
-   * Remove value from array
-   * @param array
-   * @param value
-   */
-  function arrayRemove(array, value) {
+/**
+ * Remove value from array
+ * @param array
+ * @param value
+ */
+function arrayRemove(array, value) {
     var index = array.indexOf(value);
     if (index > -1) {
-      array.splice(index, 1);
+        array.splice(index, 1);
     }
-  }
+}
 
-  /**
-   * If option is a function, evaluate it with given params
-   * @param {*} data
-   * @param {...} args arguments of a callback
-   * @returns {*}
-   */
-  function evalOpts(data, args) {
+/**
+ * If option is a function, evaluate it with given params
+ * @param {*} data
+ * @param {...} args arguments of a callback
+ * @returns {*}
+ */
+function evalOpts(data, args) {
     if (typeof data === "function") {
-      // `arguments` is an object, not array, in FF, so:
-      args = Array.prototype.slice.call(arguments);
-      data = data.apply(null, args.slice(1));
+        // `arguments` is an object, not array, in FF, so:
+        args = Array.prototype.slice.call(arguments);
+        data = data.apply(null, args.slice(1));
     }
     return data;
-  }
-  Flow.evalOpts = evalOpts;
+}
+Flow.evalOpts = evalOpts;
 
-  /**
-   * Execute function asynchronously
-   * @param fn
-   * @param context
-   */
-  function async(fn, context) {
+/**
+ * Execute function asynchronously
+ * @param fn
+ * @param context
+ */
+function async (fn, context) {
     setTimeout(fn.bind(context), 0);
-  }
+}
 
-  /**
-   * Extends the destination object `dst` by copying all of the properties from
-   * the `src` object(s) to `dst`. You can specify multiple `src` objects.
-   * @function
-   * @param {Object} dst Destination object.
-   * @param {...Object} src Source object(s).
-   * @returns {Object} Reference to `dst`.
-   */
-  function extend(dst, src) {
+/**
+ * Extends the destination object `dst` by copying all of the properties from
+ * the `src` object(s) to `dst`. You can specify multiple `src` objects.
+ * @function
+ * @param {Object} dst Destination object.
+ * @param {...Object} src Source object(s).
+ * @returns {Object} Reference to `dst`.
+ */
+function extend(dst, src) {
     each(arguments, function(obj) {
-      if (obj !== dst) {
-        each(obj, function(value, key){
-          dst[key] = value;
-        });
-      }
+        if (obj !== dst) {
+            each(obj, function(value, key) {
+                dst[key] = value;
+            });
+        }
     });
     return dst;
-  }
-  Flow.extend = extend;
+}
+Flow.extend = extend;
 
-  /**
-   * Iterate each element of an object
-   * @function
-   * @param {Array|Object} obj object or an array to iterate
-   * @param {Function} callback first argument is a value and second is a key.
-   * @param {Object=} context Object to become context (`this`) for the iterator function.
-   */
-  function each(obj, callback, context) {
+/**
+ * Iterate each element of an object
+ * @function
+ * @param {Array|Object} obj object or an array to iterate
+ * @param {Function} callback first argument is a value and second is a key.
+ * @param {Object=} context Object to become context (`this`) for the iterator function.
+ */
+function each(obj, callback, context) {
     if (!obj) {
-      return ;
+        return;
     }
     var key;
     // Is Array?
     // Array.isArray won't work, not only arrays can be iterated by index https://github.com/flowjs/ng-flow/issues/236#
     if (typeof(obj.length) !== 'undefined') {
-      for (key = 0; key < obj.length; key++) {
-        if (callback.call(context, obj[key], key) === false) {
-          return ;
+        for (key = 0; key < obj.length; key++) {
+            if (callback.call(context, obj[key], key) === false) {
+                return;
+            }
         }
-      }
     } else {
-      for (key in obj) {
-        if (obj.hasOwnProperty(key) && callback.call(context, obj[key], key) === false) {
-          return ;
+        for (key in obj) {
+            if (obj.hasOwnProperty(key) && callback.call(context, obj[key], key) === false) {
+                return;
+            }
         }
-      }
     }
-  }
-  Flow.each = each;
+}
+Flow.each = each;
 
-  /**
-   * FlowFile constructor
-   * @type {FlowFile}
-   */
-  Flow.FlowFile = FlowFile;
+/**
+ * FlowFile constructor
+ * @type {FlowFile}
+ */
+Flow.FlowFile = FlowFile;
 
-  /**
-   * FlowFile constructor
-   * @type {FlowChunk}
-   */
-  Flow.FlowChunk = FlowChunk;
+/**
+ * FlowFile constructor
+ * @type {FlowChunk}
+ */
+Flow.FlowChunk = FlowChunk;
 
-  /**
-   * Library version
-   * @type {string}
-   */
-  Flow.version = '2.13.0';
+/**
+ * Library version
+ * @type {string}
+ */
+Flow.version = '2.13.0';
 
-  if ( typeof module === "object" && module && typeof module.exports === "object" ) {
-    // Expose Flow as module.exports in loaders that implement the Node
-    // module pattern (including browserify). Do not create the global, since
-    // the user will be storing it themselves locally, and globals are frowned
-    // upon in the Node module world.
-    module.exports = Flow;
-  } else {
-    // Otherwise expose Flow to the global object as usual
-    window.Flow = Flow;
-
-    // Register as a named AMD module, since Flow can be concatenated with other
-    // files that may use define, but not via a proper concatenation script that
-    // understands anonymous AMD modules. A named AMD is safest and most robust
-    // way to register. Lowercase flow is used because AMD module names are
-    // derived from file names, and Flow is normally delivered in a lowercase
-    // file name. Do this after creating the global so that if an AMD module wants
-    // to call noConflict to hide this version of Flow, it will work.
-    if ( typeof define === "function" && define.amd ) {
-      define( "flow", [], function () { return Flow; } );
-    }
-  }
-})(window, document);
+export default Flow
