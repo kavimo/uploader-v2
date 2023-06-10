@@ -55,7 +55,10 @@ export function build(opts) {
         },
         query: function(file) {
             return file.query;
-        }
+        },
+        // preprocess: function(f) {
+        //     console.log("preprocess:",f);
+        // },
         // allowDuplicateUploads: true,
     });
 
